@@ -193,14 +193,33 @@ app.post('/employee', async (req, res) => {
     return res.status(201).json(saved);
 
   } catch (err) {
-    //custom validation error
-      if (err.name === 'ValidationError') {
 
-        console.log(`err: `, err);
+    // console.log(`err: `, err);
+
+    //custom validation error
+      if (err?.name === 'ValidationError') {
+      }
+
+      if (err?.name === "MongooseError"){
+        console.log(`Mongoose error code: `, err.cause.code);
+
+        // check if duplicate key error for email field
+      if (err?.cause.code === 11000) {
+        return res.status(400).json({
+        error: "duplicate email",
+        details: err.keyValue
+      });
+    }
+ }        
+      return res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
+
 
         // Processing all the errors
-        const validationErrors = Object.values(err.errors).map(e => e.message);
-        return res.status(400).json(  { errors: validationErrors } )
+        // const validationErrors = Object.values(err.errors).map(e => e.message);
+        // return res.status(400).json(  { errors: validationErrors } )
 
         // Processing selected errors only
         // const firstnameMsg = err.errors?.firstname?.message;
@@ -220,21 +239,9 @@ app.post('/employee', async (req, res) => {
         //    email: emailMsg,
          // },
         //});
-      }
+      
 
-      // check if duplicate key error for email field
-      if (err.code === 11000) {
-  const field = Object.keys(err.keyValue)[0];
-
-  return res.status(400).json({
-    error: `Duplicate value for '${field}'`,
-    value: err.keyValue[field]
-  });
-}
-          
-      return res.status(500).json({ status: false, message: 'Server error' });
-    }
-});
+      
 
 //Update Record
 //test URL example - http://localhost:8081/employee/60174acfcde1ab2e78a3a9b0
